@@ -1,0 +1,206 @@
+---
+title: "Module Project"
+author: '220225605'
+date: "`r Sys.Date()`"
+output: html_document
+---
+# PSY6422 Data Management and Visualisation  
+
+## Data Origins and Summary  
+The raw data constituted information procured through a survey undertaken by the Food Standards Agency, United Kingdom. The 'Alternative Proteins Consumer Survey' can be accessed [here](https://data.food.gov.uk/catalog/datasets/4353459f-a369-44e1-b4d0-8d06a1ccc479). This survey was conducted to understand consumer's awareness and perception of alternative and novel proteins. 1,930 respondents between the ages of 16 and 75 living in England, Wales and Northern Ireland participated in the survey. Data was collected between 9th – 11th December 2021 via Ipsos MORI’s online omnibus.  
+Participants were asked a variety of questions resulting in a broad range of variables. These include – gender, age group, region, household size, presence of children, education, marital status, household income, ethnicity, working status, social grade, awareness of alternative/novel proteins, perceived safety of consumption of alternative/novel proteins and willingness to consume alternative/novel proteins. For the purpose of this visualisation, only those variables representing region and willingness to consume alternative/novel proteins will be utilised.  
+Consumers’ willingness to consume novel meat substitutes or plant based ‘alternative’ proteins is largely influenced by their beliefs about their intrinsic attributes, such as, their flavour profile and safety (Mancini & Antonioli, 2020). My final project will seek to demonstrate how perceived safety   and willingness to consume alternative proteins differ across the various regions of England and Wales. A choropleth will be used to visualise how willingness to consume alternative proteins differs across the region. Additionally, a jitterplot will be used to visualise how perceived safety to consume alternative proteins differs across regions.  
+
+```{r load, echo = TRUE, warning = FALSE}
+# load data 
+library(here)
+library(tidyverse)
+data_org <- read_csv(here("data", "AltProt.csv"))
+head(data_org) 
+```  
+
+## Data Preparation  
+In order to tidy the original dataset, I reduced the number of columns by selecting only those that reported on composite dimension scores. Furthermore, I dropped any rows that contained missing values.After this, to improve interpretability, I renamed columns. I also decided to create three more columns by totalling scores received by participants on each subdimension.
+
+```{r tidy1, echo = TRUE, warning = FALSE}
+# removing unwanted columns and rows with missing values 
+data_tidy <- data_org %>% select(-c(23:162)) %>% drop_na()
+
+# renaming columns and creating more columns
+data_tidy <- data_tidy %>% 
+  rename(
+    "gender" = "DMQ_RESP_GENDER",
+    "age_grp" = "DMQ_RESP_AGE_RECODED", 
+    "region" = "DMQ_REGION", 
+    "house_size" = "DMQ_HHCMP10", 
+    "kids" = "DMQ_KIDS02", 
+    "edu" = "DMQ_UK02EDU",
+    "marital_stat" = "DMQ_UK01MAR", 
+    "income" = "DMQ_UK02INC",
+    "ethnicity" = "DMQ_UK02ETH", 
+    "work_stat" = "DMQ_EMP01",
+    "soc_grade" = "DMQ_UK01SG_RECODED", 
+    "awareness_insect" = "Q2089090438Edibleinsects", 
+    "awareness_labmeat" = "Q2089090438Labgrownmeatsometimesreferredtoasculturedmeatorcu",
+    "awareness_plprot" = "Q2089090438Plantbasedproteins", 
+    "safety_plprot" = "Q2011120850",
+    "safety_insect" = "Q2055782931", 
+    "safety_labmeat" = "Q2021612575",
+    "willingness_labmeat" =
+      "Q2018263715Labgrownmeatsometimesreferredtoasculturedmeatorcu", 
+    "willingness_insect" =
+      "Q2018263715Edibleinsectsegmealwormsgrasshoppers", 
+    "willingness_plprot" =
+      "Q2018263715Plantbasedproteinsegsoyhempseedquinoa", 
+    "replacement_ground" =
+      "Q2079418049Groundintoafoodforaddedproteinegbreadburgersfalaf",
+    "replacement_sweet" =
+      "Q2079418049Madeintosweetsorjellies", 
+    "replacement_beverage" =
+      "Q2079418049Madeintobeveragesegsportsdrinksproteinshakes",
+    "replacement_meal" =
+      "Q2079418049Amealorproteinreplacement")%>% 
+  mutate(tot_aware = awareness_insect+awareness_labmeat+awareness_plprot) %>% 
+  mutate(tot_safety = safety_plprot+safety_insect+safety_labmeat) %>% 
+  mutate(tot_willingness = willingness_labmeat+willingness_insect+willingness_plprot)
+```  
+
+Numeric columns were then converted to columns containing factors. Information about participants from Northern Ireland was removed because shapefiles containing the geographic information of Northern Ireland was not found. This process of data preparation may seem superfluous because all the variables are not being used for this visualisation; however, the tidied data could be useful for future analyses and visualisations.    
+
+```{r tidy2, echo = TRUE, warning = FALSE}
+# converting numeric variables to factor variables 
+
+# gender
+data_tidy$gender <- cut(
+  data_tidy$gender, 2, labels = c(
+    'Male', 
+    'Female'))
+# age group
+data_tidy$age_grp <-  cut(
+  data_tidy$age_grp, 6, labels = c(
+    '16-24', 
+    '25-34',
+    '35-44',
+    '45-54',
+    '55-64',
+    '65-75'))
+# region
+data_tidy <- subset(data_tidy, region < 11)
+data_tidy$region <- cut(
+  data_tidy$region, 10, labels = c(
+    'North East', 
+    'North West', 
+    'Yorkshire and The Humber', 
+    'West Midlands', 
+    'East Midlands', 
+    'East of England',
+    'South West', 
+    'South East', 
+    'London', 
+    'Wales'))
+# education 
+data_tidy$edu <- cut(
+  data_tidy$edu, 7, labels = c(
+    'Primary school', 
+    'Secondary school (age under 15 years old)', 
+    'GNVQ / GSVQ / GCSE/ SCE standard',
+    'NVQ1, NVQ2', 
+    'NVQ3/ SCE Higher Grade/ Advanced GNVQ/ GCE A/AS or similar', 
+    'NVQ4 / HNC / HND / Bachelors degree or similar',
+    'NVQ5 or post-graduate diploma'))
+# income
+data_tidy$income <- cut(
+  data_tidy$income, 11, labels = c(
+    'Under £5,000', 
+    '£5,000 - 9,999', 
+    '£10,000 - 14,999', 
+    '£15,000 - 19,999', 
+    '£20,000 - 24,999', 
+    '£25,000 - 34,999',
+    '£35,000 - 44,999', 
+    '£45,000 - 54,999', 
+    '£55,000 - 99,999', 
+    '£100,000 or more', 
+    'Prefer not to answer'))
+# ethnicity 
+data_tidy$ethnicity <- cut(
+  data_tidy$ethnicity, 24, labels = c(
+    'White', 'White', 'White', 'White', 'White', 
+    'Mixed or multiple ethnic groups','Mixed or multiple ethnic groups', 'Mixed or multiple ethnic groups',  'Mixed or multiple ethnic groups', 'Mixed or multiple ethnic groups', 
+    'Asian or Asian British', 'Asian or Asian British', 'Asian or Asian British', 'Asian or Asian British', 'Asian or Asian British','Asian or Asian British', 
+    'Black, Black British, Caribbean or African', 'Black, Black British, Caribbean or African', 'Black, Black British, Caribbean or African', 'Black, Black British, Caribbean or African', 
+    'Other ethnic group', 'Other ethnic group', 'Other ethnic group', 'Other ethnic group'))
+
+# viewing the first few rows of the tidied data set 
+head(data_tidy)
+```  
+
+## Data Visualisation  
+
+To visualise overall differences in willingness to consume alternative proteins across regions, I first needed to load a geospatial object containing information about region boundaries. The shapefile can be downloaded from the [UK Data Service Website](https://borders.ukdataservice.ac.uk/bds.html). I downloaded ‘England and Wales Regions, 2022’ for the regions of England and Wales.. Before loading the shapefile, it is essential to install and load the package ‘rgdal’.    
+
+```{r shapefile, echo=TRUE, warning=FALSE}
+# loading the shapefile
+# install.packages("rgdal")
+library(rgdal)
+shp <- readOGR(here("data","Ew_rgn_2022_bgc/ew_rgn_2022_bgc.shp"))
+# converting the shapefile into a dataframe 
+shpfort <- fortify(shp, region = "name")
+# renaming variables in the fortified shapefile
+shp_new <- rename(shpfort, "region" = "id")
+```
+
+After the information about the boundaries of the region has been loaded, the data-set containing the variable that needs to be visualised must be merged with the fortified shapefile.  
+
+```{r merge, echo=TRUE, warning=FALSE}
+# merge 
+shp_merge <- shp_new %>% left_join(data_tidy, by = c('region'), multiple = "all")
+# reordering the merged data-set
+shp_merge <- arrange(shp_merge, order)
+```  
+
+The next step is to make a basic choropleth with the default settings.  
+
+```{r choropleth1, echo = TRUE, warning = FALSE}
+# choropleth with dafault arguments 
+p <- ggplot(data = shp_merge, aes(x = long, y = lat, group = group, fill = tot_willingness), alpha = 0.9) 
+p + geom_polygon() + coord_equal() + theme_void() +
+  ggtitle('Willingness to Consume Alternative Proteins across Regions',
+          subtitle = 'England and Wales, 2022')+labs(fill="Willingness(Scale 0-20)") 
+```  
+
+We can now customise the choropleth.  
+
+```{r choropleth_cust, echo = TRUE, warning = FALSE}
+# choropleth with custom arguments 
+library(viridis)
+p + 
+  geom_polygon() + 
+  coord_equal() + 
+  theme_void()  +
+  scale_fill_viridis(name="Willingness", guide = guide_legend( keyheight = unit(3, units = "mm"), keywidth=unit(12, units = "mm"), label.position = "bottom", title.position = 'top', nrow=1) ) +
+  labs(
+    title = "Willingness to Consume Alternative Proteins",
+    subtitle = "England and Wales",
+    caption = "Data: Food Standards Agency| Creation: Shaun Solomon"
+  ) + 
+  theme(
+    text = element_text(color = "#22211d"),
+    plot.background = element_rect(fill = "#f5f5f2", color = NA),
+    panel.background = element_rect(fill = "#f5f5f2", color = NA),
+    legend.background = element_rect(fill = "#f5f5f2", color = NA),
+    
+    plot.title = element_text(size= 13, hjust=0.01, color = "#4e4d47", margin = margin(b = -0.1, t = 0.4, l = 2, unit = "cm")),
+    plot.subtitle = element_text(size= 11, hjust=0.01, color = "#4e4d47", margin = margin(b = -0.1, t = 0.43, l = 2, unit = "cm")),
+    plot.caption = element_text( size= 9, color = "#4e4d47", margin = margin(b = 0.3, r=-99, unit = "cm") ),
+    legend.position = c(0.7, 0.09))  
+```  
+
+ 
+
+
+## Discussion 
+## Conclusion
+
+
+ 

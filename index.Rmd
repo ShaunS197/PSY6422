@@ -7,16 +7,24 @@ output: html_document
 # PSY6422 Data Management and Visualisation  
 
 ## Data Origins and Summary  
+### Background  
+Previous research has indicated that large-scale consumption of meat and animal-based proteins has deleterious effects on the the environment. Its consumption has also been linked to certain lifestyle diseases. In response to these challenges, consumers have started adopting sustainable diets - diets that include plant based and alternative proteins. In spite of the supposed benefits of such a diet, some consumers are resistant to any changes in their meat-eating habits.  
+
+### Data Origins  
 The raw data constituted information procured through a survey undertaken by the Food Standards Agency, United Kingdom. The 'Alternative Proteins Consumer Survey' can be accessed [here](https://data.food.gov.uk/catalog/datasets/4353459f-a369-44e1-b4d0-8d06a1ccc479). This survey was conducted to understand consumer's awareness and perception of alternative and novel proteins. 1,930 respondents between the ages of 16 and 75 living in England, Wales and Northern Ireland participated in the survey. Data was collected between 9th – 11th December 2021 via Ipsos MORI’s online omnibus.  
 Participants were asked a variety of questions resulting in a broad range of variables. These include – gender, age group, region, household size, presence of children, education, marital status, household income, ethnicity, working status, social grade, awareness of alternative/novel proteins, perceived safety of consumption of alternative/novel proteins and willingness to consume alternative/novel proteins. For the purpose of this visualisation, only those variables representing region and willingness to consume alternative/novel proteins will be utilised.  
-Consumers’ willingness to consume novel meat substitutes or plant based ‘alternative’ proteins is largely influenced by their beliefs about their intrinsic attributes, such as, their flavour profile and safety (Mancini & Antonioli, 2020). My final project will seek to demonstrate how perceived safety   and willingness to consume alternative proteins differ across the various regions of England and Wales. A choropleth will be used to visualise how willingness to consume alternative proteins differs across the region. Additionally, a jitterplot will be used to visualise how perceived safety to consume alternative proteins differs across regions.  
+
+### Summary
+Consumers’ willingness to consume novel meat substitutes or plant based ‘alternative’ proteins is influenced by a variety of factors, including familiarity, attitudes, food neophobia, disgust and social norms (Onwezen et al., 2021). Individuals belonging to certain regions are likely to have similar attitudes towards certain types of food. My final project will seek to demonstrate how willingness to consume alternative proteins differs across the various regions of England and Wales. A choropleth will be used to visualise how willingness to consume alternative proteins differs across the region. 
 
 ```{r load, echo = TRUE, warning = FALSE}
-# load data 
+# load data and required packages 
+# ensure that package "here" is installed first using install.packages("here")
 library(here)
+# ensure that package "tidyverse" is installed first using install.packages("tidyverse")
 library(tidyverse)
-data_org <- read_csv(here("data", "AltProt.csv"))
-head(data_org) 
+data_org <- read_csv(here("data", "AltProt.csv")) # loading the required data
+head(data_org) # inspecting the first few lines of the loaded data 
 ```  
 
 ## Data Preparation  
@@ -132,7 +140,11 @@ data_tidy$ethnicity <- cut(
     'Other ethnic group', 'Other ethnic group', 'Other ethnic group', 'Other ethnic group'))
 
 # viewing the first few rows of the tidied data set 
-head(data_tidy)
+head(data_tidy) 
+
+# creating a new data-frame containing variables that would be used for this visualisation 
+
+data_tidy_viz <- data_tidy %>% select(c("region", "tot_willingness"))
 ```  
 
 ## Data Visualisation  
@@ -154,7 +166,7 @@ After the information about the boundaries of the region has been loaded, the da
 
 ```{r merge, echo=TRUE, warning=FALSE}
 # merge 
-shp_merge <- shp_new %>% left_join(data_tidy, by = c('region'), multiple = "all")
+shp_merge <- shp_new %>% left_join(data_tidy_viz, by = c('region'), multiple = "all")
 # reordering the merged data-set
 shp_merge <- arrange(shp_merge, order)
 ```  
@@ -196,11 +208,27 @@ p +
     legend.position = c(0.7, 0.09))  
 ```  
 
- 
+## Save  
+Saving the customised choropleth. 
+```{r save, echo = TRUE, warning = FALSE}
+ggsave(here("plots", "myfinalgraph.png"), width = 14, height = 18, units = "cm")
+```  
+
+## Discussion  
+The choropleth indicates that participants belonging to the East of England are more willing to consume 'alternative' proteins compared to the rest of England and Wales. This is followed by Wales, North East and South East England. A region that is most resistant to the consumption of 'alternative' and plant based proteins is the South West of England.  
+
+There could be many reasons for such a difference. For example, London is the most ethnically diverse region of England. Certain cultures have a proclivity to consume a larger proportion of plant-based or alternative proteins (tofu in East-Asian cultures and lentils in some South-East Asian cultures). Data from this survey seems to demonstrate a similar trend.  
+
+```{r disc, echo=TRUE, warning=FALSE}
+table(data_tidy$region, data_tidy$ethnicity)
+```
+
+## Extensions  
+
+Although I am pleased with what I have produced, if I had more time, I would have attempted to build on my choropleth. For example, I would have visualised a bubble map, highlighting ethnically diverse areas. I would have also produced a bivariate choropleth, visualising both perceived safety and willingness to consume alternative proteins across regions in England and Wales. 
 
 
-## Discussion 
-## Conclusion
-
+## References
+Onwezen, M. C., Bouwman, E. P., Reinders, M. J., & Dagevos, H. (2021). A systematic review on consumer acceptance of alternative proteins: Pulses, algae, insects, plant-based meat alternatives, and cultured meat. Appetite, 159, 105058. https://doi.org/10.1016/j.appet.2020.105058
 
  

@@ -8,7 +8,7 @@ output: html_document
 
 ## Data Origins and Summary  
 ### Background  
-Previous research has indicated that large-scale consumption of meat and animal-based proteins has deleterious effects on the the environment. Its consumption has also been linked to certain lifestyle diseases. In response to these challenges, consumers have started adopting sustainable diets - diets that include plant based and alternative proteins. In spite of the supposed benefits of such a diet, some consumers are resistant to any changes in their meat-eating habits.  
+Previous research has indicated that large-scale consumption of meat and animal-based proteins has deleterious effects on the environment. Its consumption has also been linked to certain lifestyle diseases. In response to these challenges, consumers have started adopting sustainable diets - diets that include plant based and alternative proteins. In spite of the supposed benefits of such a diet, some consumers are resistant to any changes in their meat-eating habits.  
 
 ### Data Origins  
 The raw data constituted information procured through a survey undertaken by the Food Standards Agency, United Kingdom. The 'Alternative Proteins Consumer Survey' can be accessed [here](https://data.food.gov.uk/catalog/datasets/4353459f-a369-44e1-b4d0-8d06a1ccc479). This survey was conducted to understand consumer's awareness and perception of alternative and novel proteins. 1,930 respondents between the ages of 16 and 75 living in England, Wales and Northern Ireland participated in the survey. Data was collected between 9th – 11th December 2021 via Ipsos MORI’s online omnibus.  
@@ -142,6 +142,8 @@ data_tidy$ethnicity <- cut(
 # viewing the first few rows of the tidied data set 
 head(data_tidy) 
 
+# saving the tidied data 
+save(data_tidy, file = here("processed data", "tidy_data.Rdata"))
 # creating a new data-frame containing variables that would be used for this visualisation 
 
 data_tidy_viz <- data_tidy %>% select(c("region", "tot_willingness"))
@@ -194,7 +196,7 @@ p +
   labs(
     title = "Willingness to Consume Alternative Proteins",
     subtitle = "England and Wales",
-    caption = "Data: Food Standards Agency| Creation: Shaun Solomon"
+    caption = "Data: Food Standards Agency| Creation: 220225605"
   ) + 
   theme(
     text = element_text(color = "#22211d"),

@@ -9,7 +9,7 @@ Individual components of the project are housed in different folders.
 2. The 'notes' folder contains a codebook explaining the variable names and levels. 
 3. The 'plots' folder contains the key visualisation as a .png file. 
 4. The 'processed data' contains an .Rdata file with the tidied data.  
-## Essential packages that you may need 
+### Essential packages that you may need 
 * here - Version 1.0.1
 * tidyverse - Version 2.0.0
 * rgdal - Version 1.6.5
